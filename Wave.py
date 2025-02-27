@@ -12,19 +12,39 @@ class Wave:
 
     def normalize(data):
         normalized =  data / np.max(np.abs(data),axis=0)
-        # normalized *= 0.707 # -3dB
+        normalized *= 0.9 # -3dB
         return normalized
     
+    def convertToFloat(data):
+        if data.dtype in [np.int32, np.int16]:
+            max = np.iinfo(data.dtype).max
+            data = data.astype(np.float32) / max
+        elif data.dtype == np.float32:
+            pass
+        elif data.dtype == np.float64:
+            data = data.astype(np.float32)
+        else:
+            raise Exception(f"Unsupported wav format: {data.dtype}")
 
-    def save(filename, sample_rate, data):
-        output_data = Wave.normalize(data.astype(np.float32))
+        return data
+    
+    def convertToInt(data, type):
+        if data.dtype != type:
+            max = np.iinfo(type).max
+            data = (data * max).astype(type)
+        return data
+
+    # Always save as Wave float32
+    def save(filename, sample_rate, data, type=np.float32):
+        output_data = Wave.normalize(data)
+        output_data = Wave.convertToFloat(data)
+        
         wav.write(filename, sample_rate, output_data)
 
+    # Converts to internal float32 representation
     def read(filename):
-
         sample_rate, data = wav.read(filename)
-        data = data.astype(np.float32)
-        length = data.shape[0] / sample_rate
+        data =  Wave.convertToFloat(data)        
         data = Wave.normalize(data)
 
         return Wave(sample_rate, data)

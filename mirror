@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
-from Signal import Signal
-from Wave import Wave
-
+import Main
 
 parser = argparse.ArgumentParser(
-                    prog='Mirror',
+                    prog='mirror',
                     description='Test, record and generate impulse response')
 
 subparsers = parser.add_subparsers(help='subcommand help')
+
+####################  Common parameters ######################################
 parser.add_argument('-s',  '--sample-rate', type=int, default=48000, help="Sample rate for sample, eg 44100 or 48000")
 parser.add_argument('-d',  '--duration', type=int, default=3, help="Duration for the sweep")
 parser.add_argument('-mn', '--freq-min', type=int, default=40, help="Frequency start")
@@ -18,31 +17,50 @@ parser.add_argument('-mx', '--freq-max', type=int, default=10000, help="Frequenc
 parser.add_argument('-ss', '--start-silence', type=int, default=1, help="Seconds of silence at start")
 parser.add_argument('-es', '--end-silence', type=int, default=1, help="Seconds of silence at end")
 parser.add_argument('-a',  '--amplitude', type=float, default=0.707, help="Amplitude of the generated signal")
+parser.add_argument('-id', '--input-device', type=int, default=None, help="The input device id")
+parser.add_argument('-od', '--output-device', type=int, default=None, help="The output device id")
+parser.add_argument('-dd', '--device', type=int, default=None, help="The device id")
 
+####################  generate parameters ######################################
 pg = subparsers.add_parser("generate", help="Generate sine sweep test signal")
 pg.add_argument('filename', default="sinesweep.wav", help="Output filename for generated signal")
-pg.add_argument('-g', '--graph',action='store_true', help="Print a graph of the signal")
+pg.set_defaults(func=Main.generate)
 
-pg.set_defaults(func=Signal.generate)
-
+####################  record parameters ######################################
 pr = subparsers.add_parser("record", help="Record signal from audio device")
-pr.set_defaults(func=Signal.record)
+pr.add_argument('filename', default="recorded.wav", help="Output filename for recorded signal")
+pr.set_defaults(func=Main.record)
 
+####################  play parameters ######################################
+pl = subparsers.add_parser("play", help="Play the test signal from audio device")
+pl.set_defaults(func=Main.play)
+
+####################  convolve parameters ######################################
 pc = subparsers.add_parser("convolve", help="Apply an impulse response to a signal")
 pc.add_argument('ir', default="ir.wav", help="Output filename for ir")
-pc.add_argument('output', default="output.wav", help="Output filename for convolved signal")
+pc.add_argument('filename', default="output.wav", help="Output filename for convolved signal")
 
-pc.set_defaults(func=Signal.convolve)
+pc.set_defaults(func=Main.convolve)
 
-
-pi = subparsers.add_parser("ir", help="Create ir from signal and recording")
+####################  deconvolve parameters ######################################
+pi = subparsers.add_parser("deconvolve", help="Create ir from signal and recording")
 pi.add_argument('recording', default="recording.wav", help="Input filename for recorded signal")
-pi.add_argument('ir', default="ir.wav", help="Output filename for ir")
+pi.add_argument('filename', default="ir.wav", help="Output filename for ir")
 pi.add_argument('-ap', '--align-phase', action='store_true', default=True, help="Align phase so that may be mixed with other IRs")
 pi.add_argument('-tb', '--trim-begin', action='store_true', default=True, help="Trim silence at begining")
 pi.add_argument('-te', '--trim-end', action='store_true', default=True, help="Trim silence at end")
 pi.add_argument('-l',  '--length', type=float, default=0.500, help="Length of IR sample")
-pi.set_defaults(func=Signal.ir)
+pi.set_defaults(func=Main.deconvolve)
+
+####################  IR parameters ######################################
+pi = subparsers.add_parser("ir", help="Create ir from signal and recording")
+pi.add_argument('filename', default="ir.wav", help="Output filename for ir")
+pi.add_argument('-ap', '--align-phase', action='store_true', default=True, help="Align phase so that may be mixed with other IRs")
+pi.add_argument('-tb', '--trim-begin', action='store_true', default=True, help="Trim silence at begining")
+pi.add_argument('-te', '--trim-end', action='store_true', default=True, help="Trim silence at end")
+pi.add_argument('-l',  '--length', type=float, default=0.500, help="Length of IR sample")
+pi.set_defaults(func=Main.ir)
+
 
 args = parser.parse_args()
 print(f"Args: {args}")

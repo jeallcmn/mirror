@@ -6,11 +6,27 @@ from Wave import Wave
 class Signal():
     minimum_freq = 40
     maximum_freq = 20000
+    
+    # def __init__(self, sample_rate, duration, amplitude, start_silence, end_silence, sweep_range):
+    #     N = int(sample_rate * duration)
+    #     sweep = amplitude * Signal.lchirp(N, 0, duration, sweep_range[0], sweep_range[1], cos=False, zero_phase_tmin=False)
+    #     invfilter = np.flipud(sweep)
+    #     # Add silence at start and end
+    #     start = np.zeros(shape = ( start_silence * sample_rate, 1 ) )
+    #     end = np.zeros(shape = ( end_silence * sample_rate, 1 ) )
+
+    #     sweep = np.expand_dims(sweep,axis = 1)
+    #     self.sin_sweep = np.concatenate((start, sweep, end), axis=0)
+    #     self.inverseFilter = invfilter
+    #     self.sample_rate = sample_rate
 
     def __init__(self, sample_rate, duration, amplitude, start_silence, end_silence, sweep_range):
         f1 = np.max([sweep_range[0], Signal.minimum_freq])
         f2 = np.min([sweep_range[1], Signal.maximum_freq, int(sample_rate/2)])
         
+
+        
+
         w1 = 2 * np.pi * f1 / sample_rate
         w2 = 2 * np.pi * f2 / sample_rate
         num_samples = duration * sample_rate
@@ -68,48 +84,23 @@ class Signal():
         print(f"Applying Impulse, ir shape:{ir.shape}, signal: {source.shape}")
         output = fftconvolve(source, ir, mode='full')
         return output
-         
-    def record(args):
-        print(f"record: {args}")
 
-    def ir(args):
-        signal = Signal.sweep(args)
-        recording = Wave.read(args.recording)
-        ir = signal.get_impulse(recording.data)
+    def _lchirp(N, tmin=0, tmax=1, fmin=0, fmax=None):
+        fmax = fmax if fmax is not None else N / 2
+        t = np.linspace(tmin, tmax, N, endpoint=True)
 
-        ir = Wave.normalize(ir)
-        if args.trim_begin:
-            ir = Wave.trim_begin(ir)
-        if args.length:
-            ir = Wave.trim_length(args.sample_rate, ir, args.length)
-        if args.trim_end:
-            ir = Wave.trim_end(ir)
-        if args.align_phase:
-            ir = Wave.align_phase(ir)
-        Wave.save(args.ir, signal.sample_rate, ir)   
+        a = (fmin - fmax) / (tmin - tmax)
+        b = (fmin*tmax - fmax*tmin) / (tmax - tmin)
 
-    def sweep(args):
-        s = Signal(sample_rate   = args.sample_rate,
-               duration      = args.duration,
-               amplitude     = args.amplitude,
-               start_silence = args.start_silence,
-               end_silence   = args.end_silence,
-               sweep_range   = [args.freq_min, args.freq_max]
-        )
-        return s
+        phi = (a/2)*(t**2 - tmin**2) + b*(t - tmin)
+        phi *= (2*np.pi)
+        return phi
 
-    def generate(args):
-        s = Signal.sweep(args)
-        
-        Wave.save( filename = args.filename, 
-                sample_rate = args.sample_rate, 
-                data = s.sin_sweep )
-        if args.graph:
-            s.plot()
-    def convolve(args):
-        s = Signal.sweep(args)
-        ir = Wave.read(filename = args.ir)
-        output = s.apply_impulse(ir.data)
-        Wave.save( filename = args.output, sample_rate = args.sample_rate, data = output)
-
-
+    def lchirp(N, tmin=0, tmax=1, fmin=0, fmax=None, zero_phase_tmin=True, cos=True):
+        phi = Signal._lchirp(N, tmin, tmax, fmin, fmax)
+        if zero_phase_tmin:
+            phi *= ( (phi[-1] - phi[-1] % (2*np.pi)) / phi[-1] )
+        else:
+            phi -= (phi[-1] % (2*np.pi))
+        fn = np.cos if cos else np.sin
+        return fn(phi)
