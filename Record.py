@@ -35,7 +35,7 @@ class Record:
         sd.default.samplerate = sample_rate
         sd.default.channels = 1
         sd.default.dtype = np.int16
-        sd.default.blocksize = 32768
+        sd.default.blocksize = 1024
         sd.default.device = (id, od)
 
     def play(signal, output_device):
@@ -52,9 +52,24 @@ class Record:
         Record.set_defaults(signal.sample_rate, input_device, output_device)
         
         data = Wave.convertToInt(signal.sin_sweep, np.int16)
-        print(f"Play wav data {data.dtype}, {signal.sample_rate}")
-
         recorded = sd.playrec(data, signal.sample_rate, channels=1, blocking = False)
         sd.wait()
         return recorded
     
+
+if __name__ == "__main__":
+    fs = 48000 #sys.argv[1]
+    filename = sys.argv[2]
+    frames = fs * 10
+    # Record for 10 seconds
+    sd.default.samplerate = fs
+    sd.default.channels = 1
+    sd.default.dtype = np.int16
+    # sd.default.blocksize = 1024
+    sd.default.device = (20, 20)
+    myrecording = sd.rec(frames = frames, channels=1, blocking = True)
+    sd.wait()
+
+    Wave.save(filename, fs, myrecording)
+
+ 

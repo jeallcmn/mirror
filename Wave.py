@@ -2,13 +2,16 @@ import scipy.io.wavfile as wav
 import numpy as np
 import sys
 from scipy import signal
+from pathlib import Path
 
 
 class Wave:
     
-    def __init__(self, sample_rate, data):
+    def __init__(self, sample_rate, data, filename=None):
         self.sample_rate = sample_rate
         self.data = data
+        self.filename = filename
+        self.name = Path(filename).stem
 
     def normalize(data):
         normalized =  data / np.max(np.abs(data),axis=0)
@@ -47,7 +50,7 @@ class Wave:
         data =  Wave.convertToFloat(data)        
         data = Wave.normalize(data)
 
-        return Wave(sample_rate, data)
+        return Wave(sample_rate, data, filename=filename)
 
     def trim_begin(data, threshold=0.02):
         counter = 0

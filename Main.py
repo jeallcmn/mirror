@@ -1,3 +1,4 @@
+import Graph
 from Signal import Signal
 from Wave import Wave
 from Record import Record
@@ -66,3 +67,9 @@ def convolve(args):
     ir = Wave.read(filename = args.ir)
     output = s.apply_impulse(ir.data)
     Wave.save( filename = args.filename, sample_rate = args.sample_rate, data = output)
+
+def graph(args):
+    ir = [Wave.read(filename = args.ir1)]
+    if args.ir2:
+        ir.append( Wave.read(filename = args.ir2))
+    Graph.display_ir(ir, args.num_samples)
