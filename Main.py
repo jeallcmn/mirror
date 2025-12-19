@@ -69,7 +69,8 @@ def convolve(args):
     Wave.save( filename = args.filename, sample_rate = args.sample_rate, data = output)
 
 def graph(args):
-    ir = [Wave.read(filename = args.ir1)]
-    if args.ir2:
-        ir.append( Wave.read(filename = args.ir2))
+    ir = [Wave.read(filename = args.irs[0])]
+    if len(args.irs) > 1:
+        ir.append( Wave.read(filename = args.irs[1]))
+    print(f"Graphing {args.irs} with {args.num_samples} samples...")
     Graph.display_ir(ir, args.num_samples)

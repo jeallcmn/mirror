@@ -38,9 +38,8 @@ pl.set_defaults(func=Main.play)
 ####################  play parameters ######################################
 gr = subparsers.add_parser("graph", help="Graph 1 or two impulse response and their frequency responses")
 gr.set_defaults(func=Main.graph)
-gr.add_argument('ir1', help="Impulse Response 1")
-gr.add_argument('ir2', help="Impulse Response 2")
-gr.add_argument('-n', '--num-sumaples', default='256', help="Number of samples to include into plot for IRs")
+gr.add_argument('irs', nargs="*", help="Impulse Responses")
+gr.add_argument('-n', '--num-samples', type=int, default='256', help="Number of samples to include into plot for IRs")
 
 ####################  convolve parameters ######################################
 pc = subparsers.add_parser("convolve", help="Apply an impulse response to a signal")
